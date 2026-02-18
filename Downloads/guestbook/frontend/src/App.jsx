@@ -16,6 +16,7 @@ export default function App() {
   const [success, setSuccess] = useState(false)
   const [reactions, setReactions] = useState({}) // Store reactions per post
   const [showReactionPicker, setShowReactionPicker] = useState(null) // Track which post's picker is open
+  const [userReactions, setUserReactions] = useState({}) // Track which reactions current user has made
 
   useEffect(() => {
     fetchPosts()
@@ -87,17 +88,35 @@ export default function App() {
   ]
 
   const handleReaction = (postId, reactionType) => {
+    const userReactionKey = `${postId}-${reactionType}`
+    const hasReacted = userReactions[userReactionKey]
+    
     setReactions(prev => {
       const postReactions = prev[postId] || {}
       const currentCount = postReactions[reactionType] || 0
+      
+      // If user already reacted with this type, remove it (-1), otherwise add it (+1)
+      const newCount = hasReacted ? Math.max(0, currentCount - 1) : currentCount + 1
+      
+      const updatedReactions = { ...postReactions }
+      if (newCount === 0) {
+        delete updatedReactions[reactionType]
+      } else {
+        updatedReactions[reactionType] = newCount
+      }
+      
       return {
         ...prev,
-        [postId]: {
-          ...postReactions,
-          [reactionType]: currentCount + 1
-        }
+        [postId]: updatedReactions
       }
     })
+    
+    // Toggle user's reaction state
+    setUserReactions(prev => ({
+      ...prev,
+      [userReactionKey]: !hasReacted
+    }))
+    
     setShowReactionPicker(null)
   }
 
@@ -250,16 +269,20 @@ export default function App() {
                       
                       {showReactionPicker === post.id && (
                         <div className="reaction-picker">
-                          {reactionEmojis.map(reaction => (
-                            <button
-                              key={reaction.label}
-                              className="reaction-option"
-                              onClick={() => handleReaction(post.id, reaction.label)}
-                              title={reaction.label}
-                            >
-                              <span className="reaction-emoji">{reaction.emoji}</span>
-                            </button>
-                          ))}
+                          {reactionEmojis.map(reaction => {
+                            const userReactionKey = `${post.id}-${reaction.label}`
+                            const hasReacted = userReactions[userReactionKey]
+                            return (
+                              <button
+                                key={reaction.label}
+                                className={`reaction-option ${hasReacted ? 'reacted' : ''}`}
+                                onClick={() => handleReaction(post.id, reaction.label)}
+                                title={reaction.label}
+                              >
+                                <span className="reaction-emoji">{reaction.emoji}</span>
+                              </button>
+                            )
+                          })}
                         </div>
                       )}
                     </div>

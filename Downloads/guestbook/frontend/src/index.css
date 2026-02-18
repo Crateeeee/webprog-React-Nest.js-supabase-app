@@ -333,6 +333,16 @@ body {
   transform: scale(1.3);
 }
 
+.reaction-option.reacted {
+  background: var(--primary);
+  transform: scale(1.1);
+}
+
+.reaction-option.reacted:hover {
+  background: var(--primary-hover);
+  transform: scale(1.3);
+}
+
 .reaction-emoji {
   font-size: 1.4rem;
   line-height: 1;
