@@ -14,6 +14,8 @@ export default function App() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(false)
+  const [reactions, setReactions] = useState({}) // Store reactions per post
+  const [showReactionPicker, setShowReactionPicker] = useState(null) // Track which post's picker is open
 
   useEffect(() => {
     fetchPosts()
@@ -75,6 +77,41 @@ export default function App() {
     return colors[Math.abs(hash) % colors.length]
   }
 
+  const reactionEmojis = [
+    { emoji: '👍', label: 'Like', color: '#3b82f6' },
+    { emoji: '❤️', label: 'Love', color: '#ec4899' },
+    { emoji: '😂', label: 'Haha', color: '#f59e0b' },
+    { emoji: '😮', label: 'Wow', color: '#8b5cf6' },
+    { emoji: '😢', label: 'Sad', color: '#64748b' },
+    { emoji: '🔥', label: 'Fire', color: '#f97316' },
+  ]
+
+  const handleReaction = (postId, reactionType) => {
+    setReactions(prev => {
+      const postReactions = prev[postId] || {}
+      const currentCount = postReactions[reactionType] || 0
+      return {
+        ...prev,
+        [postId]: {
+          ...postReactions,
+          [reactionType]: currentCount + 1
+        }
+      }
+    })
+    setShowReactionPicker(null)
+  }
+
+  const getTopReaction = (postId) => {
+    const postReactions = reactions[postId] || {}
+    const sorted = Object.entries(postReactions).sort((a, b) => b[1] - a[1])
+    return sorted.length > 0 ? sorted[0] : null
+  }
+
+  const getTotalReactions = (postId) => {
+    const postReactions = reactions[postId] || {}
+    return Object.values(postReactions).reduce((sum, count) => sum + count, 0)
+  }
+
   return (
     <div className="app">
       {/* ── HEADER ── */}
@@ -82,8 +119,17 @@ export default function App() {
         <div className="header-container">
           <div className="logo">
             <svg width="40" height="40" viewBox="0 0 40 40">
-              <circle cx="20" cy="20" r="19" fill="#14b8a6"/>
-              <path d="M25 14h-3c-1.1 0-2 .9-2 2v3h5l-1 5h-4v10h-5V24h-3v-5h3v-3.5C15 12.5 16.5 11 19.5 11H25v3z" fill="white"/>
+              <defs>
+                <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{stopColor: '#14b8a6'}} />
+                  <stop offset="100%" style={{stopColor: '#0d9488'}} />
+                </linearGradient>
+              </defs>
+              <circle cx="20" cy="20" r="18" fill="url(#logoGradient)"/>
+              <path d="M13 12h14c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H13c-1.1 0-2-.9-2-2V14c0-1.1.9-2 2-2z" fill="white"/>
+              <line x1="16" y1="17" x2="24" y2="17" stroke="#14b8a6" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="16" y1="20" x2="24" y2="20" stroke="#14b8a6" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1="16" y1="23" x2="21" y2="23" stroke="#14b8a6" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             <span className="logo-text">guestbook</span>
           </div>
@@ -176,13 +222,48 @@ export default function App() {
                   <div className="post-content">
                     {post.message}
                   </div>
+                  
+                  {getTotalReactions(post.id) > 0 && (
+                    <div className="reaction-summary">
+                      {Object.entries(reactions[post.id] || {}).map(([type, count]) => {
+                        const reaction = reactionEmojis.find(r => r.label === type)
+                        return count > 0 ? (
+                          <span key={type} className="reaction-badge">
+                            {reaction.emoji} {count}
+                          </span>
+                        ) : null
+                      })}
+                    </div>
+                  )}
+
                   <div className="post-actions">
-                    <button className="action-btn">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
-                      </svg>
-                      Like
-                    </button>
+                    <div className="action-btn-container">
+                      <button 
+                        className="action-btn"
+                        onClick={() => setShowReactionPicker(showReactionPicker === post.id ? null : post.id)}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
+                        </svg>
+                        {getTopReaction(post.id) ? reactionEmojis.find(r => r.label === getTopReaction(post.id)[0])?.emoji : 'Like'}
+                      </button>
+                      
+                      {showReactionPicker === post.id && (
+                        <div className="reaction-picker">
+                          {reactionEmojis.map(reaction => (
+                            <button
+                              key={reaction.label}
+                              className="reaction-option"
+                              onClick={() => handleReaction(post.id, reaction.label)}
+                              title={reaction.label}
+                            >
+                              <span className="reaction-emoji">{reaction.emoji}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
                     <button className="action-btn">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>

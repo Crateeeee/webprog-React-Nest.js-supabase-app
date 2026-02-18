@@ -261,8 +261,13 @@ body {
   margin-top: 12px;
 }
 
-.action-btn {
+.action-btn-container {
+  position: relative;
   flex: 1;
+}
+
+.action-btn {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -281,6 +286,78 @@ body {
 
 .action-btn:hover {
   background: var(--bg);
+}
+
+/* ── REACTION PICKER ── */
+.reaction-picker {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px;
+  display: flex;
+  gap: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  margin-bottom: 8px;
+  z-index: 10;
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.reaction-option {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  transition: transform 0.2s, background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reaction-option:hover {
+  background: var(--bg);
+  transform: scale(1.3);
+}
+
+.reaction-emoji {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+/* ── REACTION SUMMARY ── */
+.reaction-summary {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 8px;
+}
+
+.reaction-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  border: 1px solid var(--border);
 }
 
 /* ── SKELETON ── */
